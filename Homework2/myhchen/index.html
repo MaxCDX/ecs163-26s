@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="description" content="">
+	<title>Pokemon Visualization Dashboard</title>
+	<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+	<main class="dashboard">
+		<section id="parallel-panel" class="panel parallel-panel">
+			<h2>Battle Stat Profiles</h2>
+			<div class="placeholder">Parallel coordinates focus view will go here.</div>
+		</section>
+		<section id="heatmap-panel" class="panel heatmap-panel">
+			<h2>Data Overview: 2D Heatmap</h2>
+			<div id="type-generation-heatmap" class="chart-container"></div>
+		</section>
+		<section id="scatter-panel" class="panel scatter-panel">
+			<h2>Strength vs. Catchability</h2>
+			<div class="placeholder">Catch rate × total scatterplot will go here.</div>
+		</section>
+	</main>
+	<div id="tooltip" class="tooltip"></div>
+
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+	<script src="main.js"></script>
+</body>
+</html>
