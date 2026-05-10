@@ -100,6 +100,33 @@ body {
   stroke-width: 0.7px;
 }
 
+.gridline line {
+  stroke: #e1e8ee;
+  stroke-width: 1px;
+}
+
+.gridline path {
+  stroke: none;
+}
+
+.strength-bar {
+  stroke: #ffffff;
+  stroke-width: 0.7px;
+}
+
+.average-line,
+.average-line-legend {
+  stroke: #5d4037;
+  stroke-width: 1.5px;
+  stroke-dasharray: 4, 4;
+}
+
+.average-line-label {
+  font-size: 11px;
+  font-weight: 700;
+  fill: #5d4037;
+}
+
 .legend-title {
   font-size: 12px;
   font-weight: 700;

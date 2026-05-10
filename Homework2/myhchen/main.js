@@ -253,11 +253,236 @@ function typeGenerationHeatmap(pokemon) {
   heatmapLegend(svg, colorScale, 0, maxCount, margin.left + width + 16, margin.top, 128);
 }
 
-// Start data loading
+// type strength data
+function getTypeStrengthData(pokemon) {
+  return d3
+    .nest()
+    .key((d) => d.type1)
+    .rollup((rows) => ({
+      averageTotal: d3.mean(rows, (d) => d.total),
+      count: rows.length,
+    }))
+    .entries(pokemon)
+    .map((d) => ({
+      type: d.key,
+      averageTotal: d.value.averageTotal,
+      count: d.value.count,
+    }))
+    .sort((a, b) => d3.descending(a.averageTotal, b.averageTotal));
+}
+
+// bar axes
+function barChartAxes(chart, xScale, yScale, width, height) {
+  chart
+    .append("g")
+    .attr("class", "gridline")
+    .attr("transform", `translate(0, ${height})`)
+    .call(d3.axisBottom(xScale).tickSize(-height).tickFormat(""));
+
+  chart.append("g").attr("class", "gridline").call(d3.axisLeft(yScale).tickSize(-width).tickFormat(""));
+
+  chart
+    .append("g")
+    .attr("class", "axis")
+    .attr("transform", `translate(0, ${height})`)
+    .call(d3.axisBottom(xScale))
+    .selectAll("text")
+    .attr("text-anchor", "end")
+    .attr("dx", "-0.5em")
+    .attr("dy", "0.2em")
+    .attr("transform", "rotate(-45)");
+
+  chart.append("g").attr("class", "axis").call(d3.axisLeft(yScale).ticks(5));
+}
+
+// bar legend
+function barChartLegend(svg, colors, x, y) {
+  const legendData = [
+    { labelLines: ["Above overall", "average"], color: colors.above },
+    { labelLines: ["Below overall", "average"], color: colors.below },
+  ];
+
+  const legend = svg.append("g").attr("transform", `translate(${x}, ${y})`);
+
+  legend
+    .append("text")
+    .attr("class", "legend-title")
+    .attr("x", 0)
+    .attr("y", -8)
+    .text("Type Average");
+
+  const items = legend
+    .selectAll(".bar-legend-item")
+    .data(legendData)
+    .enter()
+    .append("g")
+    .attr("class", "bar-legend-item")
+    .attr("transform", (d, i) => `translate(0, ${i * 32})`);
+
+  items.append("rect").attr("width", 10).attr("height", 10).attr("x", 0).attr("y", 0).attr("fill", (d) => d.color);
+
+  const labels = items
+    .append("text")
+    .attr("class", "legend-label")
+    .attr("x", 16)
+    .attr("y", 8);
+
+  labels
+    .selectAll("tspan")
+    .data((d) => d.labelLines)
+    .enter()
+    .append("tspan")
+    .attr("x", 16)
+    .attr("dy", (d, i) => (i === 0 ? 0 : 12))
+    .text((d) => d);
+
+  const lineItem = legend.append("g").attr("transform", `translate(0, ${legendData.length * 32})`);
+
+  lineItem
+    .append("line")
+    .attr("x1", 0)
+    .attr("x2", 12)
+    .attr("y1", 5)
+    .attr("y2", 5)
+    .attr("class", "average-line-legend");
+
+  lineItem
+    .append("text")
+    .attr("class", "legend-label")
+    .attr("x", 16)
+    .attr("y", 9)
+    .text("Overall average");
+}
+
+// average line
+function averageLine(chart, yScale, width, overallAverage) {
+  const y = yScale(overallAverage);
+
+  chart
+    .append("line")
+    .attr("class", "average-line")
+    .attr("x1", 0)
+    .attr("x2", width)
+    .attr("y1", y)
+    .attr("y2", y);
+
+  chart
+    .append("text")
+    .attr("class", "average-line-label")
+    .attr("x", width - 4)
+    .attr("y", y - 6)
+    .attr("text-anchor", "end")
+    .text(`Overall average: ${overallAverage.toFixed(1)}`);
+}
+
+// draw bar chart
+function typeStrengthBarChart(pokemon) {
+  const container = d3.select("#type-strength-bar-chart");
+  container.selectAll("*").remove();
+
+  const margin = { top: 36, right: 158, bottom: 72, left: 62 };
+  const outerWidth = container.node().clientWidth;
+  const outerHeight = container.node().clientHeight;
+  const width = outerWidth - margin.left - margin.right;
+  const height = outerHeight - margin.top - margin.bottom;
+  const typeData = getTypeStrengthData(pokemon);
+  const overallAverage = d3.mean(pokemon, (d) => d.total);
+  const colors = { above: "#b2182b", below: "#8fa8b8" };
+
+  // create SVG
+  const svg = container
+    .append("svg")
+    .attr("width", outerWidth)
+    .attr("height", outerHeight)
+    .attr("viewBox", `0 0 ${outerWidth} ${outerHeight}`)
+    .attr("role", "img")
+    .attr("aria-label", "Average total stats by primary type bar chart");
+
+  const chart = svg
+    .append("g")
+    .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+  // scales
+  const xScale = d3.scaleBand().domain(typeData.map((d) => d.type)).range([0, width]).padding(0.18);
+  const yScale = d3
+    .scaleLinear()
+    .domain([0, d3.max(typeData, (d) => d.averageTotal)])
+    .nice()
+    .range([height, 0]);
+
+  const tooltip = d3.select("#tooltip");
+
+  // title
+  svg
+    .append("text")
+    .attr("class", "chart-title")
+    .attr("x", margin.left + width / 2)
+    .attr("y", 16)
+    .attr("text-anchor", "middle")
+    .text("Average Total Stats by Primary Type");
+
+  barChartAxes(chart, xScale, yScale, width, height);
+
+  // axis labels
+  svg
+    .append("text")
+    .attr("class", "axis-label")
+    .attr("x", margin.left + width / 2)
+    .attr("y", outerHeight - 8)
+    .attr("text-anchor", "middle")
+    .text("Primary Type");
+
+  svg
+    .append("text")
+    .attr("class", "axis-label")
+    .attr("x", -(margin.top + height / 2))
+    .attr("y", 16)
+    .attr("text-anchor", "middle")
+    .attr("transform", "rotate(-90)")
+    .text("Average Total Base Stats");
+
+  // draw bars
+  chart
+    .selectAll("rect.strength-bar")
+    .data(typeData)
+    .enter()
+    .append("rect")
+    .attr("class", "strength-bar")
+    .attr("x", (d) => xScale(d.type))
+    .attr("y", (d) => yScale(d.averageTotal))
+    .attr("width", xScale.bandwidth())
+    .attr("height", (d) => height - yScale(d.averageTotal))
+    .attr("fill", (d) => (d.averageTotal >= overallAverage ? colors.above : colors.below))
+    .on("mouseover", function (d) {
+      d3.select(this).attr("stroke", "#263238").attr("stroke-width", 1.5);
+      tooltip
+        .style("display", "block")
+        .html(
+          `<strong>${d.type}</strong><br>Average Total: ${d.averageTotal.toFixed(
+            1
+          )}<br>Pokemon count: ${d.count}<br>${d.averageTotal >= overallAverage ? "Above" : "Below"} overall average`
+        );
+    })
+    .on("mousemove", function () {
+      tooltip.style("left", `${d3.event.pageX + 12}px`).style("top", `${d3.event.pageY + 12}px`);
+    })
+    .on("mouseout", function () {
+      d3.select(this).attr("stroke", "#ffffff").attr("stroke-width", 0.7);
+      tooltip.style("display", "none");
+    });
+
+  // draw average line
+  averageLine(chart, yScale, width, overallAverage);
+
+  barChartLegend(svg, colors, margin.left + width + 18, margin.top + 16);
+}
+
+// data loading
 if (typeof document !== "undefined") {
   loadData()
     .then((pokemon) => {
       typeGenerationHeatmap(pokemon);
+      typeStrengthBarChart(pokemon);
     })
     .catch((error) => {
       console.error("Failed to load Pokemon data:", error);
