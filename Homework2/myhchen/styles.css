@@ -14,12 +14,12 @@ body {
 
 .dashboard {
   display: grid;
-  grid-template-columns: 3fr 2fr;
+  grid-template-columns: 1.35fr 1fr;
   grid-template-rows: 1.15fr 0.85fr;
   gap: 16px;
   width: 100vw;
   height: 100vh;
-  padding: 18px;
+  padding: 16px;
   overflow: hidden;
 }
 
@@ -43,6 +43,11 @@ body {
 .parallel-panel {
   grid-column: 2;
   grid-row: 1 / span 2;
+  border-color: #c8d6df;
+}
+
+.parallel-panel h2 {
+  font-size: 16px;
 }
 
 .heatmap-panel {
@@ -58,6 +63,19 @@ body {
 .chart-container {
   width: 100%;
   height: calc(100% - 24px);
+}
+
+.heatmap-panel .chart-container,
+.scatter-panel .chart-container,
+.parallel-panel .chart-container {
+  height: calc(100% - 48px);
+}
+
+.chart-subtitle {
+  margin: 0 0 6px;
+  color: #546e7a;
+  font-size: 12px;
+  line-height: 1.25;
 }
 
 .placeholder {
@@ -142,6 +160,36 @@ body {
 .legend-gradient {
   stroke: #b0bec5;
   stroke-width: 0.5px;
+}
+
+.sankey-link {
+  fill: none;
+  stroke-opacity: 0.42;
+}
+
+.sankey-link:hover {
+  stroke-opacity: 0.86;
+}
+
+.sankey-node {
+  stroke: #ffffff;
+  stroke-width: 0.9px;
+}
+
+.sankey-node-label {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #263238;
+  paint-order: stroke;
+  stroke: #ffffff;
+  stroke-width: 3px;
+}
+
+.sankey-stage-label,
+.sankey-note {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #546e7a;
 }
 
 .tooltip {

@@ -67,6 +67,18 @@ function loadData() {
   });
 }
 
+// position tooltip
+function moveTooltip(tooltip) {
+  const offset = 12;
+  const tooltipNode = tooltip.node();
+  const tooltipWidth = tooltipNode ? tooltipNode.offsetWidth : 160;
+  const tooltipHeight = tooltipNode ? tooltipNode.offsetHeight : 80;
+  const left = Math.min(d3.event.pageX + offset, window.innerWidth - tooltipWidth - offset);
+  const top = Math.min(d3.event.pageY + offset, window.innerHeight - tooltipHeight - offset);
+
+  tooltip.style("left", `${Math.max(offset, left)}px`).style("top", `${Math.max(offset, top)}px`);
+}
+
 // sort types by count
 function getTypesByCount(pokemon) {
   const typeCounts = d3
@@ -103,6 +115,7 @@ function heatmapLegend(svg, colorScale, minValue, maxValue, x, y, height) {
   const legendWidth = 16;
   const legendId = "heatmap-legend-gradient";
 
+  // create gradient
   const defs = svg.append("defs");
   const gradient = defs
     .append("linearGradient")
@@ -121,6 +134,7 @@ function heatmapLegend(svg, colorScale, minValue, maxValue, x, y, height) {
 
   const legend = svg.append("g").attr("transform", `translate(${x}, ${y})`);
 
+  // draw legend title
   legend
     .append("text")
     .attr("class", "legend-title")
@@ -128,6 +142,7 @@ function heatmapLegend(svg, colorScale, minValue, maxValue, x, y, height) {
     .attr("y", -12)
     .text("Count");
 
+  // draw legend ramp
   legend
     .append("rect")
     .attr("class", "legend-gradient")
@@ -135,6 +150,7 @@ function heatmapLegend(svg, colorScale, minValue, maxValue, x, y, height) {
     .attr("height", height)
     .attr("fill", `url(#${legendId})`);
 
+  // draw legend labels
   legend
     .append("text")
     .attr("class", "legend-label")
@@ -150,7 +166,8 @@ function heatmapLegend(svg, colorScale, minValue, maxValue, x, y, height) {
     .text(minValue.toFixed(0));
 }
 
-// draw heatmap
+// heatmap shows overview distribution across generations
+// uses matrix position for generation and type so provides context for the dashboard
 function typeGenerationHeatmap(pokemon) {
   const container = d3.select("#type-generation-heatmap");
   container.selectAll("*").remove();
@@ -166,7 +183,7 @@ function typeGenerationHeatmap(pokemon) {
   const heatmapData = getTypeGenerationCounts(pokemon, generations, types);
   const maxCount = d3.max(heatmapData, (d) => d.count);
 
-  // create SVG
+  // create svg container
   const svg = container
     .append("svg")
     .attr("width", outerWidth)
@@ -188,7 +205,7 @@ function typeGenerationHeatmap(pokemon) {
 
   const tooltip = d3.select("#tooltip");
 
-  // title
+  // draw title
   svg
     .append("text")
     .attr("class", "chart-title")
@@ -197,7 +214,7 @@ function typeGenerationHeatmap(pokemon) {
     .attr("text-anchor", "middle")
     .text("Pokemon Counts by Generation and Primary Type");
 
-  // axis
+  // draw axes
   chart
     .append("g")
     .attr("class", "axis")
@@ -206,7 +223,7 @@ function typeGenerationHeatmap(pokemon) {
 
   chart.append("g").attr("class", "axis").call(d3.axisLeft(yScale));
 
-  // axis labels
+  // draw axis labels
   svg
     .append("text")
     .attr("class", "axis-label")
@@ -224,7 +241,7 @@ function typeGenerationHeatmap(pokemon) {
     .attr("transform", "rotate(-90)")
     .text("Primary Type");
 
-  // cells
+  // draw heatmap cells
   chart
     .selectAll("rect")
     .data(heatmapData)
@@ -236,6 +253,7 @@ function typeGenerationHeatmap(pokemon) {
     .attr("width", xScale.bandwidth())
     .attr("height", yScale.bandwidth())
     .attr("fill", (d) => colorScale(d.count))
+    // add tooltip interaction
     .on("mouseover", function (d) {
       d3.select(this).attr("stroke", "#263238").attr("stroke-width", 2);
       tooltip
@@ -243,7 +261,7 @@ function typeGenerationHeatmap(pokemon) {
         .html(`<strong>${d.type}</strong><br>Generation: ${d.generation}<br>Count: ${d.count}`);
     })
     .on("mousemove", function () {
-      tooltip.style("left", `${d3.event.pageX + 12}px`).style("top", `${d3.event.pageY + 12}px`);
+      moveTooltip(tooltip);
     })
     .on("mouseout", function () {
       d3.select(this).attr("stroke", "#ffffff").attr("stroke-width", 1);
@@ -273,6 +291,7 @@ function getTypeStrengthData(pokemon) {
 
 // bar axes
 function barChartAxes(chart, xScale, yScale, width, height) {
+  // draw gridlines
   chart
     .append("g")
     .attr("class", "gridline")
@@ -281,6 +300,7 @@ function barChartAxes(chart, xScale, yScale, width, height) {
 
   chart.append("g").attr("class", "gridline").call(d3.axisLeft(yScale).tickSize(-width).tickFormat(""));
 
+  // draw axes
   chart
     .append("g")
     .attr("class", "axis")
@@ -304,6 +324,7 @@ function barChartLegend(svg, colors, x, y) {
 
   const legend = svg.append("g").attr("transform", `translate(${x}, ${y})`);
 
+  // draw legend title
   legend
     .append("text")
     .attr("class", "legend-title")
@@ -311,6 +332,7 @@ function barChartLegend(svg, colors, x, y) {
     .attr("y", -8)
     .text("Type Average");
 
+  // draw color keys
   const items = legend
     .selectAll(".bar-legend-item")
     .data(legendData)
@@ -336,6 +358,7 @@ function barChartLegend(svg, colors, x, y) {
     .attr("dy", (d, i) => (i === 0 ? 0 : 12))
     .text((d) => d);
 
+  // draw average key
   const lineItem = legend.append("g").attr("transform", `translate(0, ${legendData.length * 32})`);
 
   lineItem
@@ -358,6 +381,7 @@ function barChartLegend(svg, colors, x, y) {
 function averageLine(chart, yScale, width, overallAverage) {
   const y = yScale(overallAverage);
 
+  // draw reference line
   chart
     .append("line")
     .attr("class", "average-line")
@@ -366,6 +390,7 @@ function averageLine(chart, yScale, width, overallAverage) {
     .attr("y1", y)
     .attr("y2", y);
 
+  // label reference line
   chart
     .append("text")
     .attr("class", "average-line-label")
@@ -375,7 +400,8 @@ function averageLine(chart, yScale, width, overallAverage) {
     .text(`Overall average: ${overallAverage.toFixed(1)}`);
 }
 
-// draw bar chart
+// bar chart compares average type strength
+// supports type comparison and differs from heatmap by using averages
 function typeStrengthBarChart(pokemon) {
   const container = d3.select("#type-strength-bar-chart");
   container.selectAll("*").remove();
@@ -389,7 +415,7 @@ function typeStrengthBarChart(pokemon) {
   const overallAverage = d3.mean(pokemon, (d) => d.total);
   const colors = { above: "#b2182b", below: "#8fa8b8" };
 
-  // create SVG
+  // create svg container
   const svg = container
     .append("svg")
     .attr("width", outerWidth)
@@ -402,7 +428,7 @@ function typeStrengthBarChart(pokemon) {
     .append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-  // scales
+  // create scales
   const xScale = d3.scaleBand().domain(typeData.map((d) => d.type)).range([0, width]).padding(0.18);
   const yScale = d3
     .scaleLinear()
@@ -412,7 +438,7 @@ function typeStrengthBarChart(pokemon) {
 
   const tooltip = d3.select("#tooltip");
 
-  // title
+  // draw title
   svg
     .append("text")
     .attr("class", "chart-title")
@@ -423,7 +449,7 @@ function typeStrengthBarChart(pokemon) {
 
   barChartAxes(chart, xScale, yScale, width, height);
 
-  // axis labels
+  // draw axis labels
   svg
     .append("text")
     .attr("class", "axis-label")
@@ -453,6 +479,7 @@ function typeStrengthBarChart(pokemon) {
     .attr("width", xScale.bandwidth())
     .attr("height", (d) => height - yScale(d.averageTotal))
     .attr("fill", (d) => (d.averageTotal >= overallAverage ? colors.above : colors.below))
+    // add tooltip interaction
     .on("mouseover", function (d) {
       d3.select(this).attr("stroke", "#263238").attr("stroke-width", 1.5);
       tooltip
@@ -464,7 +491,7 @@ function typeStrengthBarChart(pokemon) {
         );
     })
     .on("mousemove", function () {
-      tooltip.style("left", `${d3.event.pageX + 12}px`).style("top", `${d3.event.pageY + 12}px`);
+      moveTooltip(tooltip);
     })
     .on("mouseout", function () {
       d3.select(this).attr("stroke", "#ffffff").attr("stroke-width", 0.7);
@@ -477,12 +504,306 @@ function typeStrengthBarChart(pokemon) {
   barChartLegend(svg, colors, margin.left + width + 18, margin.top + 16);
 }
 
+// build sankey data
+function getSankeyFlowData(pokemon) {
+  const generations = Array.from(new Set(pokemon.map((d) => d.generation))).sort((a, b) => a - b);
+  const statuses = ["Non-Legendary", "Legendary"];
+  const topTypeCount = 10;
+  // count primary types
+  const rawTypeCounts = d3
+    .nest()
+    .key((d) => d.type1)
+    .rollup((rows) => rows.length)
+    .entries(pokemon)
+    .sort((a, b) => d3.descending(a.value, b.value) || d3.ascending(a.key, b.key));
+  const topTypes = new Set(rawTypeCounts.slice(0, topTypeCount).map((d) => d.key));
+  const typeLabelMap = new Map(rawTypeCounts.map((d) => [d.key, topTypes.has(d.key) ? d.key : "Other Types"]));
+  // group low-frequency types
+  const groupedTypeCounts = d3
+    .nest()
+    .key((d) => typeLabelMap.get(d.type1))
+    .rollup((rows) => rows.length)
+    .entries(pokemon);
+  const types = groupedTypeCounts
+    .sort((a, b) => d3.descending(a.value, b.value) || d3.ascending(a.key, b.key))
+    .map((d) => d.key);
+  const nodeMap = new Map();
+  const linkMap = new Map();
+
+  // create sankey nodes
+  function addNode(id, label, stage, order) {
+    if (!nodeMap.has(id)) {
+      nodeMap.set(id, { id, label, stage, order, value: 0, sourceLinks: [], targetLinks: [] });
+    }
+    return nodeMap.get(id);
+  }
+
+  generations.forEach((generation, index) => addNode(`gen-${generation}`, `Gen ${generation}`, "generation", index));
+  types.forEach((type, index) => addNode(`type-${type}`, type, "type", index));
+  statuses.forEach((status, index) => addNode(`status-${status}`, status, "status", index));
+
+  // aggregate sankey links
+  function addLink(sourceId, targetId, value) {
+    const key = `${sourceId}->${targetId}`;
+    if (!linkMap.has(key)) {
+      linkMap.set(key, { sourceId, targetId, value: 0 });
+    }
+    linkMap.get(key).value += value;
+  }
+
+  pokemon.forEach((d) => {
+    const generationId = `gen-${d.generation}`;
+    const typeId = `type-${typeLabelMap.get(d.type1)}`;
+    const statusId = `status-${d.isLegendary ? "Legendary" : "Non-Legendary"}`;
+
+    nodeMap.get(generationId).value += 1;
+    nodeMap.get(typeId).value += 1;
+    nodeMap.get(statusId).value += 1;
+    addLink(generationId, typeId, 1);
+    addLink(typeId, statusId, 1);
+  });
+
+  const nodes = Array.from(nodeMap.values());
+  const links = Array.from(linkMap.values()).map((link) => ({
+    ...link,
+    source: nodeMap.get(link.sourceId),
+    target: nodeMap.get(link.targetId),
+  }));
+
+  links.forEach((link) => {
+    link.source.sourceLinks.push(link);
+    link.target.targetLinks.push(link);
+  });
+
+  return { nodes, links };
+}
+
+// layout sankey columns
+function layoutSankeyFlow(nodes, links, width, height) {
+  const nodeWidth = 16;
+  const nodePadding = 5;
+  const stageOrder = ["generation", "type", "status"];
+  const xPositions = {
+    generation: 0,
+    type: width / 2 - nodeWidth / 2,
+    status: width - nodeWidth,
+  };
+
+  const stages = stageOrder.map((stage) =>
+    nodes.filter((node) => node.stage === stage).sort((a, b) => d3.ascending(a.order, b.order))
+  );
+
+  const scale = d3.min(stages, (stageNodes) => {
+    const total = d3.sum(stageNodes, (node) => node.value);
+    return (height - nodePadding * (stageNodes.length - 1)) / total;
+  });
+
+  // position sankey nodes
+  stages.forEach((stageNodes) => {
+    const totalHeight = d3.sum(stageNodes, (node) => node.value * scale) + nodePadding * (stageNodes.length - 1);
+    let y = (height - totalHeight) / 2;
+
+    stageNodes.forEach((node) => {
+      node.x0 = xPositions[node.stage];
+      node.x1 = node.x0 + nodeWidth;
+      node.y0 = y;
+      node.y1 = y + node.value * scale;
+      y = node.y1 + nodePadding;
+    });
+  });
+
+  // order flow links
+  nodes.forEach((node) => {
+    node.sourceLinks.sort((a, b) => d3.ascending(a.target.y0, b.target.y0));
+    node.targetLinks.sort((a, b) => d3.ascending(a.source.y0, b.source.y0));
+  });
+
+  // position flow links
+  nodes.forEach((node) => {
+    let sourceOffset = 0;
+    let targetOffset = 0;
+
+    node.sourceLinks.forEach((link) => {
+      link.width = Math.max(1, link.value * scale);
+      link.y0 = node.y0 + sourceOffset + link.width / 2;
+      sourceOffset += link.width;
+    });
+
+    node.targetLinks.forEach((link) => {
+      link.width = Math.max(1, link.value * scale);
+      link.y1 = node.y0 + targetOffset + link.width / 2;
+      targetOffset += link.width;
+    });
+  });
+
+  links.forEach((link) => {
+    link.x0 = link.source.x1;
+    link.x1 = link.target.x0;
+  });
+}
+
+// sankey path
+function sankeyPath(d) {
+  const curve = (d.x1 - d.x0) * 0.62;
+  return `M${d.x0},${d.y0} C${d.x0 + curve},${d.y0} ${d.x1 - curve},${d.y1} ${d.x1},${d.y1}`;
+}
+
+// sankey color
+function sankeyColor(d) {
+  if (d.stage === "generation") return "#c98938";
+  if (d.stage === "type") return "#78909c";
+  if (d.label === "Legendary") return "#a61e2c";
+  return "#9fb3bf";
+}
+
+// link color
+function sankeyLinkColor(d) {
+  if (d.target.label === "Legendary") return "#a61e2c";
+  if (d.target.stage === "status") return "#8fa8b8";
+  return "#d99a45";
+}
+
+// sankey shows categorical flow into legendary status
+// use proportional links for counts and differ by showing categorical composition
+function generationTypeLegendarySankey(pokemon) {
+  const container = d3.select("#sankey-flow");
+  container.selectAll("*").remove();
+
+  const margin = { top: 70, right: 92, bottom: 76, left: 62 };
+  const outerWidth = container.node().clientWidth;
+  const outerHeight = container.node().clientHeight;
+  const width = outerWidth - margin.left - margin.right;
+  const height = outerHeight - margin.top - margin.bottom;
+  const sankeyData = getSankeyFlowData(pokemon);
+  const tooltip = d3.select("#tooltip");
+
+  layoutSankeyFlow(sankeyData.nodes, sankeyData.links, width, height);
+
+  // create svg container
+  const svg = container
+    .append("svg")
+    .attr("width", outerWidth)
+    .attr("height", outerHeight)
+    .attr("viewBox", `0 0 ${outerWidth} ${outerHeight}`)
+    .attr("role", "img")
+    .attr("aria-label", "Pokemon flow by generation primary type and legendary status sankey diagram");
+
+  const chart = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+  // draw title
+  svg
+    .append("text")
+    .attr("class", "chart-title")
+    .attr("x", outerWidth / 2)
+    .attr("y", 18)
+    .attr("text-anchor", "middle")
+    .text("Pokemon Flow by Generation, Primary Type, and Legendary Status");
+
+  // draw annotation
+  svg
+    .append("text")
+    .attr("class", "sankey-note")
+    .attr("x", outerWidth / 2)
+    .attr("y", 34)
+    .attr("text-anchor", "middle")
+    .text("links show Pokemon counts; top 10 types shown");
+
+  // draw stage labels
+  const stageLabels = [
+    { label: "Generation", x: margin.left },
+    { label: "Primary Type", x: margin.left + width / 2 },
+    { label: "Legendary Status", x: margin.left + width },
+  ];
+
+  svg
+    .selectAll(".sankey-stage-label")
+    .data(stageLabels)
+    .enter()
+    .append("text")
+    .attr("class", "sankey-stage-label")
+    .attr("x", (d) => d.x)
+    .attr("y", 50)
+    .attr("text-anchor", (d, i) => (i === 0 ? "start" : i === 2 ? "end" : "middle"))
+    .text((d) => d.label);
+
+  // draw flow paths
+  const flowLinks = chart
+    .append("g")
+    .selectAll(".sankey-link")
+    .data(sankeyData.links)
+    .enter()
+    .append("path")
+    .attr("class", "sankey-link")
+    .attr("d", sankeyPath)
+    .attr("stroke", sankeyLinkColor)
+    .attr("stroke-width", (d) => d.width)
+    // add tooltip interaction
+    .on("mouseover", function (d) {
+      flowLinks.attr("stroke-opacity", 0.16);
+      d3.select(this).raise().attr("stroke-opacity", 0.88);
+      tooltip
+        .style("display", "block")
+        .html(`<strong>${d.source.label} → ${d.target.label}</strong><br>Pokemon count: ${d.value}`);
+    })
+    .on("mousemove", function () {
+      moveTooltip(tooltip);
+    })
+    .on("mouseout", function () {
+      flowLinks.attr("stroke-opacity", null);
+      tooltip.style("display", "none");
+    });
+
+  // draw nodes
+  const nodes = chart
+    .append("g")
+    .selectAll(".sankey-node-group")
+    .data(sankeyData.nodes)
+    .enter()
+    .append("g")
+    .attr("class", "sankey-node-group")
+    // add node tooltip
+    .on("mouseover", function (d) {
+      tooltip.style("display", "block").html(`<strong>${d.label}</strong><br>Total Pokémon: ${d.value}`);
+    })
+    .on("mousemove", function () {
+      moveTooltip(tooltip);
+    })
+    .on("mouseout", () => tooltip.style("display", "none"));
+
+  nodes
+    .append("rect")
+    .attr("class", "sankey-node")
+    .attr("x", (d) => d.x0)
+    .attr("y", (d) => d.y0)
+    .attr("width", (d) => d.x1 - d.x0)
+    .attr("height", (d) => Math.max(2, d.y1 - d.y0))
+    .attr("fill", sankeyColor);
+
+  // draw node labels
+  nodes
+    .append("text")
+    .attr("class", "sankey-node-label")
+    .attr("x", (d) => {
+      if (d.stage === "generation") return d.x0 - 6;
+      if (d.stage === "status") return d.x1 + 6;
+      return d.x0 + (d.x1 - d.x0) / 2;
+    })
+    .attr("y", (d) => (d.y0 + d.y1) / 2 + 3)
+    .attr("text-anchor", (d) => {
+      if (d.stage === "generation") return "end";
+      if (d.stage === "status") return "start";
+      return "middle";
+    })
+    .text((d) => d.label);
+}
+
 // data loading
 if (typeof document !== "undefined") {
   loadData()
     .then((pokemon) => {
       typeGenerationHeatmap(pokemon);
       typeStrengthBarChart(pokemon);
+      generationTypeLegendarySankey(pokemon);
     })
     .catch((error) => {
       console.error("Failed to load Pokemon data:", error);

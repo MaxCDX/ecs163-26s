@@ -9,15 +9,18 @@
 <body>
 	<main class="dashboard">
 		<section id="parallel-panel" class="panel parallel-panel">
-			<h2>Battle Stat Profiles</h2>
-			<div class="placeholder">Parallel coordinates focus view will go here.</div>
+			<h2>Generation-Type-Legendary: Sankey</h2>
+			<p class="chart-subtitle">Flows of Generation, Type, and Legendary Counts</p>
+			<div id="sankey-flow" class="chart-container"></div>
 		</section>
 		<section id="heatmap-panel" class="panel heatmap-panel">
 			<h2>Data Overview: 2D Heatmap</h2>
+			<p class="chart-subtitle">Type counts by generation</p>
 			<div id="type-generation-heatmap" class="chart-container"></div>
 		</section>
 		<section id="scatter-panel" class="panel scatter-panel">
 			<h2>Type & Strength: Bar Chart</h2>
+			<p class="chart-subtitle">Average stats by type</p>
 			<div id="type-strength-bar-chart" class="chart-container"></div>
 		</section>
 	</main>
