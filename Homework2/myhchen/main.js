@@ -1,3 +1,33 @@
+/*
+dashboard theme:
+explore pokemon types by distribution, strength, and legendary status
+
+dashboard flow:
+start with the heatmap to understand the overall type distribution
+move to the bar chart to compare type strength
+finish with the sankey to see how generation, type, and legendary status connect
+
+heatmap:
+shows type counts across generations
+
+bar chart:
+compares average total stats by type
+
+sankey:
+shows generation, type, and legendary count flow
+
+focus + context:
+heatmap is the overview, bar chart is support, sankey is the focus
+
+design rationale:
+the heatmap uses position and color to show overall distribution patterns
+the bar chart uses length for accurate comparison of average type strength
+the sankey diagram uses flow width to show category composition and relationships
+
+the three charts use different visualization methods and explore different aspects of the dataset
+the dashboard moves from overview to comparison to detailed categorical flow
+*/
+
 const DATA_PATH = "data/pokemon_alopez247.csv";
 
 // reusable fields
